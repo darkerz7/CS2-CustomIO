@@ -19,7 +19,7 @@ namespace CS2_CustomIO
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.1";
+		public override string ModuleVersion => "1.DZ.1a";
 		public override void Load(bool hotReload)
 		{
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
@@ -36,7 +36,7 @@ namespace CS2_CustomIO
 			var cInput = hook.GetParam<CUtlSymbolLarge>(1);
 			var cValue = new CUtlSymbolLarge(hook.GetParam<CVariant>(4).Handle);
 
-			if (cInput.KeyValue.ToLower().CompareTo("keyvalues") == 0 || cInput.KeyValue.ToLower().CompareTo("keyvalue") == 0 || cInput.KeyValue.ToLower().CompareTo("addoutput") == 0)
+			if (cInput.KeyValue.ToLower().StartsWith("keyvalue"))
 			{
 				if (!string.IsNullOrEmpty(cValue.KeyValue))
 				{
