@@ -1,4 +1,4 @@
-# EntityFix for CounterStrikeSharp
+# CustomIO for CounterStrikeSharp
 Fixes missing keyvalues from CSS/CS:GO. Idea taken from [cs2fixes](https://github.com/Source2ZE/CS2Fixes/wiki/Custom-Mapping-Features)
 
 ## Features:
