@@ -1,10 +1,8 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Modules.Entities;
+using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Utils;
-using System;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace CS2_CustomIO
 {
@@ -19,7 +17,7 @@ namespace CS2_CustomIO
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.1a";
+		public override string ModuleVersion => "1.DZ.2";
 		public override void Load(bool hotReload)
 		{
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
@@ -68,18 +66,14 @@ namespace CS2_CustomIO
 				}
 			} else if (cInput.KeyValue.ToLower().CompareTo("addscore") == 0)
 			{
-				var cActivator = hook.GetParam<CEntityInstance>(2);
+				var player = EntityIsPlayer(hook.GetParam<CEntityInstance>(2));
 				int iscore = 0;
-				if (cActivator.DesignerName.CompareTo("player") == 0 && Int32.TryParse(cValue.KeyValue, out iscore))
+				if (player != null && Int32.TryParse(cValue.KeyValue, out iscore))
 				{
-					var player = new CCSPlayerController(new CCSPlayerPawn(cActivator.Handle).Controller.Value.Handle);
-					if (player != null && player.IsValid)
-					{
-						player.Score += iscore;
-						#if DEBUG
-						PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) AddScore: {iscore}");
-						#endif
-					}
+					player.Score += iscore;
+					#if DEBUG
+					PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) AddScore: {iscore}");
+					#endif
 				}
 			} else if (cInput.KeyValue.ToLower().CompareTo("setmessage") == 0 && cEntity.DesignerName.CompareTo("env_hudhint") == 0)
 			{
@@ -168,13 +162,16 @@ namespace CS2_CustomIO
 		 *	}*/
 		void KV_Movetype(CBaseEntity cEntity, string[] keyvalue)
 		{
-			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
+			var player = EntityIsPlayer(cEntity);
+			if (player != null && player.PlayerPawn.Value != null && keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
 			{
 				byte iMovetype = 0;
 				if (byte.TryParse(keyvalue[1], out iMovetype))
 				{
 					iMovetype = Math.Clamp(iMovetype, (byte)MoveType_t.MOVETYPE_NONE, (byte)MoveType_t.MOVETYPE_LAST);
-					cEntity.MoveType = (MoveType_t)iMovetype;
+					player.PlayerPawn.Value.MoveType = (MoveType_t)iMovetype;
+					Schema.SetSchemaValue(player.PlayerPawn.Value.Handle, "CBaseEntity", "m_nActualMoveType", (MoveType_t)iMovetype);
+					Utilities.SetStateChanged(player.PlayerPawn.Value, "CBaseEntity", "m_MoveType");
 					#if DEBUG
 					PrintToConsole($"DesignerName: {cEntity.DesignerName} Name: {cEntity.Entity?.Name} MoveType: {(MoveType_t)iMovetype}");
 					#endif
@@ -308,37 +305,32 @@ namespace CS2_CustomIO
 		}
 		void KV_Speed(CEntityInstance cEntity, string[] keyvalue)
 		{
-			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && cEntity.DesignerName.CompareTo("player") == 0)
+			var player = EntityIsPlayer(cEntity);
+			if (player != null && player.PlayerPawn.Value != null && player.PlayerPawn.Value.MovementServices != null && keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
 			{
 				float fSpeed = 0.0f;
 				if (float.TryParse(keyvalue[1], out fSpeed))
 				{
-					var player = new CCSPlayerController(new CCSPlayerPawn(cEntity.Handle).Controller.Value.Handle);
-					if (player != null && player.IsValid)
-					{
-						player.Speed = fSpeed;
-						#if DEBUG
-						PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) Speed: {fSpeed}");
-						#endif
-					}
+					player.PlayerPawn.Value.MovementServices.Maxspeed = 260.0f * fSpeed;
+					player.PlayerPawn.Value.VelocityModifier = fSpeed;
+					#if DEBUG
+					PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) Speed: {fSpeed}");
+					#endif
 				}
 			}
 		}
 		void KV_Runspeed(CEntityInstance cEntity, string[] keyvalue)
 		{
-			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && cEntity.DesignerName.CompareTo("player") == 0)
+			var player = EntityIsPlayer(cEntity);
+			if (player != null && player.PlayerPawn.Value != null && keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
 			{
 				float fRunSpeed = 0.0f;
 				if (float.TryParse(keyvalue[1], out fRunSpeed))
 				{
-					var pawn = new CCSPlayerPawn(cEntity.Handle);
-					if (pawn != null && pawn.IsValid)
-					{
-						pawn.VelocityModifier = fRunSpeed;
-						#if DEBUG
-						PrintToConsole($"Player: {pawn.Controller.Value?.PlayerName}({pawn.Controller.Value?.SteamID}) RunSpeed: {fRunSpeed}");
-						#endif
-					}
+					player.PlayerPawn.Value.VelocityModifier = fRunSpeed;
+					#if DEBUG
+					PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) RunSpeed: {fRunSpeed}");
+					#endif
 				}
 			}
 		}
@@ -351,7 +343,19 @@ namespace CS2_CustomIO
 			}
 			return null;
 		}
-
+		public CCSPlayerController? EntityIsPlayer(CEntityInstance? entity)
+		{
+			if (entity != null && entity.IsValid && entity.DesignerName.CompareTo("player") == 0)
+			{
+				var pawn = new CCSPlayerPawn(entity.Handle);
+				if (pawn.Controller.Value != null && pawn.Controller.Value.IsValid)
+				{
+					var player = new CCSPlayerController(pawn.Controller.Value.Handle);
+					if (player != null && player.IsValid) return player;
+				}
+			}
+			return null;
+		}
 		#if DEBUG
 		public static void PrintToConsole(string sMessage, int iColor = 12)
 		{
