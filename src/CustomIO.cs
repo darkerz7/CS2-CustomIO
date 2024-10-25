@@ -89,6 +89,9 @@ namespace CS2_CustomIO
 					if (player != null && player.PlayerPawn.Value != null && player.PlayerPawn.Value.IsValid)
 					{
 						player.PlayerPawn.Value.SetModel(cValue.KeyValue);
+						#if DEBUG
+						PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) SetModel: {cValue.KeyValue}");
+						#endif
 					}
 				}
 			}
