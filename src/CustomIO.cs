@@ -17,7 +17,7 @@ namespace CS2_CustomIO
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.4";
+		public override string ModuleVersion => "1.DZ.5";
 		public override void Load(bool hotReload)
 		{
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
@@ -77,11 +77,12 @@ namespace CS2_CustomIO
 				}
 			} else if (cInput.KeyValue.ToLower().CompareTo("setmessage") == 0 && cEntity.DesignerName.CompareTo("env_hudhint") == 0)
 			{
-				new CEnvHudHint(cEntity.EntityInstance.Handle).Message = cInput.KeyValue;
+				new CEnvHudHint(cEntity.EntityInstance.Handle).Message = cValue.KeyValue;
 				#if DEBUG
-				PrintToConsole($"env_hudhint({cEntity.Name}) SetMessage:{cInput.KeyValue}");
+				PrintToConsole($"env_hudhint({cEntity.Name}) SetMessage:{cValue.KeyValue}");
 				#endif
-			} else if (cInput.KeyValue.ToLower().CompareTo("setmodel") == 0)
+			}
+			else if (cInput.KeyValue.ToLower().CompareTo("setmodel") == 0)
 			{
 				if (!string.IsNullOrEmpty(cValue.KeyValue))
 				{
