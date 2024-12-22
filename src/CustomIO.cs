@@ -3,21 +3,33 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Utils;
+using System.Runtime.InteropServices;
 
 namespace CS2_CustomIO
 {
 	public class CustomIO : BasePlugin
 	{
-		public class CUtlSymbolLarge : NativeObject
+		/*public class CUtlSymbolLarge : NativeObject
 		{
 			public CUtlSymbolLarge(IntPtr pointer) : base(pointer) { }
 			public string KeyValue => Utilities.ReadStringUtf8(Handle + 0);
+		}*/
+		public class CUtlSymbolLarge : NativeObject
+		{
+			public CUtlSymbolLarge(IntPtr pointer) : base(pointer)
+			{
+				IntPtr ptr = Marshal.ReadIntPtr(pointer);
+				//KeyValue = ptr.ToString();
+				if (ptr == IntPtr.Zero || ptr < 200000000000) return;
+				KeyValue = Marshal.PtrToStringUTF8(ptr);
+			}
+			public string? KeyValue;
 		}
 		public static MemoryFunctionVoid<CEntityIdentity, CUtlSymbolLarge, CEntityInstance, CEntityInstance, CVariant, int> CEntityIdentity_AcceptInputFunc = new(GameData.GetSignature("CEntityIdentity_AcceptInput"));
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.5";
+		public override string ModuleVersion => "1.DZ.6";
 		public override void Load(bool hotReload)
 		{
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
