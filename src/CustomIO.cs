@@ -29,7 +29,7 @@ namespace CS2_CustomIO
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.6";
+		public override string ModuleVersion => "1.DZ.7";
 		public override void Load(bool hotReload)
 		{
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
@@ -334,9 +334,10 @@ namespace CS2_CustomIO
 			var player = EntityIsPlayer(cEntity);
 			if (player != null && player.PlayerPawn.Value != null && player.PlayerPawn.Value.MovementServices != null && keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
 			{
-				float fSpeed = 0.0f;
+				float fSpeed = 0.001f;
 				if (float.TryParse(keyvalue[1], out fSpeed))
 				{
+					if(fSpeed <= 0.0f) fSpeed = 0.001f;
 					player.PlayerPawn.Value.MovementServices.Maxspeed = 260.0f * fSpeed;
 					player.PlayerPawn.Value.VelocityModifier = fSpeed;
 					#if DEBUG
@@ -350,9 +351,10 @@ namespace CS2_CustomIO
 			var player = EntityIsPlayer(cEntity);
 			if (player != null && player.PlayerPawn.Value != null && keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
 			{
-				float fRunSpeed = 0.0f;
+				float fRunSpeed = 0.001f;
 				if (float.TryParse(keyvalue[1], out fRunSpeed))
 				{
+					if (fRunSpeed <= 0.0f) fRunSpeed = 0.001f;
 					player.PlayerPawn.Value.VelocityModifier = fRunSpeed;
 					#if DEBUG
 					PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) RunSpeed: {fRunSpeed}");
