@@ -25,11 +25,11 @@ namespace CS2_CustomIO
 			}
 			public string? KeyValue;
 		}
-		public static MemoryFunctionVoid<CEntityIdentity, CUtlSymbolLarge, CEntityInstance, CEntityInstance, CVariant, int> CEntityIdentity_AcceptInputFunc = new(GameData.GetSignature("CEntityIdentity_AcceptInput"));
+		static MemoryFunctionVoid<CEntityIdentity, CUtlSymbolLarge, CEntityInstance, CEntityInstance, CVariant, int> CEntityIdentity_AcceptInputFunc = new(GameData.GetSignature("CEntityIdentity_AcceptInput"));
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.7";
+		public override string ModuleVersion => "1.DZ.8";
 		public override void Load(bool hotReload)
 		{
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
@@ -42,11 +42,12 @@ namespace CS2_CustomIO
 
 		private HookResult OnInput(DynamicHook hook)
 		{
-			var cEntity = hook.GetParam<CEntityIdentity>(0);
+			var cEntity = hook.GetParam<CEntityIdentity>(0);		
 			var cInput = hook.GetParam<CUtlSymbolLarge>(1);
+			if (string.IsNullOrEmpty(cInput.KeyValue)) return HookResult.Continue;
 			var cValue = new CUtlSymbolLarge(hook.GetParam<CVariant>(4).Handle);
 
-			if (cInput.KeyValue.ToLower().StartsWith("keyvalue"))
+			if (cInput.KeyValue.StartsWith("keyvalue", StringComparison.OrdinalIgnoreCase))
 			{
 				if (!string.IsNullOrEmpty(cValue.KeyValue))
 				{
@@ -79,8 +80,7 @@ namespace CS2_CustomIO
 			} else if (cInput.KeyValue.ToLower().CompareTo("addscore") == 0)
 			{
 				var player = EntityIsPlayer(hook.GetParam<CEntityInstance>(2));
-				int iscore = 0;
-				if (player != null && Int32.TryParse(cValue.KeyValue, out iscore))
+				if (player != null && Int32.TryParse(cValue.KeyValue, out int iscore))
 				{
 					player.Score += iscore;
 					#if DEBUG
@@ -89,7 +89,7 @@ namespace CS2_CustomIO
 				}
 			} else if (cInput.KeyValue.ToLower().CompareTo("setmessage") == 0 && cEntity.DesignerName.CompareTo("env_hudhint") == 0)
 			{
-				new CEnvHudHint(cEntity.EntityInstance.Handle).Message = cValue.KeyValue;
+				if(cValue.KeyValue != null) new CEnvHudHint(cEntity.EntityInstance.Handle).Message = cValue.KeyValue;
 				#if DEBUG
 				PrintToConsole($"env_hudhint({cEntity.Name}) SetMessage:{cValue.KeyValue}");
 				#endif
@@ -111,7 +111,8 @@ namespace CS2_CustomIO
 
 			return HookResult.Continue;
 		}
-		void KV_Targetname(CEntityIdentity cEntity, string[] keyvalue)
+
+		static void KV_Targetname(CEntityIdentity cEntity, string[] keyvalue)
 		{
 			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
 			{
@@ -121,17 +122,17 @@ namespace CS2_CustomIO
 				#endif
 			}
 		}
-		void KV_Origin(CBaseEntity cEntity, string[] keyvalue)
+
+		static void KV_Origin(CBaseEntity cEntity, string[] keyvalue)
 		{
 			if (keyvalue.Length >= 4 && !string.IsNullOrEmpty(keyvalue[1]) && !string.IsNullOrEmpty(keyvalue[2]) && !string.IsNullOrEmpty(keyvalue[3]))
 			{
-				float x, y, z = 0.0f;
-				if (float.TryParse(keyvalue[1], out x) && float.TryParse(keyvalue[2], out y) && float.TryParse(keyvalue[3], out z))
+				if (float.TryParse(keyvalue[1], out float x) && float.TryParse(keyvalue[2], out float y) && float.TryParse(keyvalue[3], out float z))
 				{
 					x = Math.Clamp(x, -16384.0f, 16384.0f);
 					y = Math.Clamp(y, -16384.0f, 16384.0f);
 					z = Math.Clamp(z, -16384.0f, 16384.0f);
-					Vector vecOrigin = new Vector(x, y, z);
+					Vector vecOrigin = new(x, y, z);
 					cEntity.Teleport(vecOrigin);
 					#if DEBUG
 					PrintToConsole($"DesignerName: {cEntity.DesignerName} Name: {cEntity.Entity?.Name} NewOrigin:{x} {y} {z}");
@@ -139,17 +140,17 @@ namespace CS2_CustomIO
 				}
 			}
 		}
-		void KV_Angles(CBaseEntity cEntity, string[] keyvalue)
+
+		static void KV_Angles(CBaseEntity cEntity, string[] keyvalue)
 		{
 			if (keyvalue.Length >= 4 && !string.IsNullOrEmpty(keyvalue[1]) && !string.IsNullOrEmpty(keyvalue[2]) && !string.IsNullOrEmpty(keyvalue[3]))
 			{
-				float x, y, z = 0.0f;
-				if (float.TryParse(keyvalue[1], out x) && float.TryParse(keyvalue[2], out y) && float.TryParse(keyvalue[3], out z))
+				if (float.TryParse(keyvalue[1], out float x) && float.TryParse(keyvalue[2], out float y) && float.TryParse(keyvalue[3], out float z))
 				{
 					x = Math.Clamp(x, -360.0f, 360.0f);
 					y = Math.Clamp(y, -360.0f, 360.0f);
 					z = Math.Clamp(z, -360.0f, 360.0f);
-					QAngle vecAngle = new QAngle(x, y, z);
+					QAngle vecAngle = new(x, y, z);
 					cEntity.Teleport(null, vecAngle, null);
 					#if DEBUG
 					PrintToConsole($"DesignerName: {cEntity.DesignerName} Name: {cEntity.Entity?.Name} NewAngle:{x} {y} {z}");
@@ -157,7 +158,8 @@ namespace CS2_CustomIO
 				}
 			}
 		}
-		void KV_MaxHealth(CBaseEntity cEntity, string[] keyvalue)
+
+		static void KV_MaxHealth(CBaseEntity cEntity, string[] keyvalue)
 		{
 			int iMaxHealth = 100;
 			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && Int32.TryParse(keyvalue[1], out iMaxHealth))
@@ -168,7 +170,8 @@ namespace CS2_CustomIO
 				#endif
 			}
 		}
-		void KV_Health(CBaseEntity cEntity, string[] keyvalue)
+
+		static void KV_Health(CBaseEntity cEntity, string[] keyvalue)
 		{
 			int iHealth = 100;
 			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && Int32.TryParse(keyvalue[1], out iHealth))
@@ -179,6 +182,7 @@ namespace CS2_CustomIO
 				#endif
 			}
 		}
+
 		/* public enum MoveType_t : byte
 		 * {
 		 *		MOVETYPE_NONE = 0,			MOVETYPE_OBSOLETE = 1,		MOVETYPE_WALK = 2,		MOVETYPE_FLY = 3,
@@ -186,13 +190,12 @@ namespace CS2_CustomIO
 		 *		MOVETYPE_OBSERVER = 8,		MOVETYPE_LADDER = 9,		MOVETYPE_CUSTOM = 10,	MOVETYPE_LAST = 11,
 		 *		MOVETYPE_INVALID = 11,		MOVETYPE_MAX_BITS = 5
 		 *	}*/
-		void KV_Movetype(CBaseEntity cEntity, string[] keyvalue)
+		static void KV_Movetype(CBaseEntity cEntity, string[] keyvalue)
 		{
 			var player = EntityIsPlayer(cEntity);
 			if (player != null && player.PlayerPawn.Value != null && keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
 			{
-				byte iMovetype = 0;
-				if (byte.TryParse(keyvalue[1], out iMovetype))
+				if (byte.TryParse(keyvalue[1], out byte iMovetype))
 				{
 					iMovetype = Math.Clamp(iMovetype, (byte)MoveType_t.MOVETYPE_NONE, (byte)MoveType_t.MOVETYPE_LAST);
 					player.PlayerPawn.Value.MoveType = (MoveType_t)iMovetype;
@@ -204,23 +207,26 @@ namespace CS2_CustomIO
 				}
 			}
 		}
-		void KV_EntityTemplate(CEntityInstance cEntity, string[] keyvalue)
+
+		static void KV_EntityTemplate(CEntityInstance cEntity, string[] keyvalue)
 		{
 			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && cEntity.DesignerName.CompareTo("env_entity_maker") == 0)
 			{
-				CEnvEntityMaker maker = new CEnvEntityMaker(cEntity.Handle);
-				maker.Template = keyvalue[1];
+				CEnvEntityMaker maker = new(cEntity.Handle)
+				{
+					Template = keyvalue[1]
+				};
 				#if DEBUG
 				PrintToConsole($"ENV_Entity_Maker: ID-{maker.Index} Name-{maker.Entity?.Name} EntityTemplate: {keyvalue[1]}");
 				#endif
 			}
 		}
-		void KV_Basevelocity(CBaseEntity cEntity, string[] keyvalue)
+
+		static void KV_Basevelocity(CBaseEntity cEntity, string[] keyvalue)
 		{
 			if (keyvalue.Length >= 4 && !string.IsNullOrEmpty(keyvalue[1]) && !string.IsNullOrEmpty(keyvalue[2]) && !string.IsNullOrEmpty(keyvalue[3]))
 			{
-				float x, y, z = 0.0f;
-				if (float.TryParse(keyvalue[1], out x) && float.TryParse(keyvalue[2], out y) && float.TryParse(keyvalue[3], out z))
+				if (float.TryParse(keyvalue[1], out float x) && float.TryParse(keyvalue[2], out float y) && float.TryParse(keyvalue[3], out float z))
 				{
 					x = Math.Clamp(x, -4096.0f, 4096.0f);
 					y = Math.Clamp(y, -4096.0f, 4096.0f);
@@ -234,17 +240,17 @@ namespace CS2_CustomIO
 				}
 			}
 		}
-		void KV_Absvelocity(CBaseEntity cEntity, string[] keyvalue)
+
+		static void KV_Absvelocity(CBaseEntity cEntity, string[] keyvalue)
 		{
 			if (keyvalue.Length >= 4 && !string.IsNullOrEmpty(keyvalue[1]) && !string.IsNullOrEmpty(keyvalue[2]) && !string.IsNullOrEmpty(keyvalue[3]))
 			{
-				float x, y, z = 0.0f;
-				if (float.TryParse(keyvalue[1], out x) && float.TryParse(keyvalue[2], out y) && float.TryParse(keyvalue[3], out z))
+				if (float.TryParse(keyvalue[1], out float x) && float.TryParse(keyvalue[2], out float y) && float.TryParse(keyvalue[3], out float z))
 				{
 					x = Math.Clamp(x, -4096.0f, 4096.0f);
 					y = Math.Clamp(y, -4096.0f, 4096.0f);
 					z = Math.Clamp(z, -4096.0f, 4096.0f);
-					Vector vecAbsVelocity = new Vector(x, y, z);
+					Vector vecAbsVelocity = new(x, y, z);
 					cEntity.Teleport(null, null, vecAbsVelocity);
 					#if DEBUG
 					PrintToConsole($"DesignerName: {cEntity.DesignerName} Name: {cEntity.Entity?.Name} AbsVelocity:{x} {y} {z}");
@@ -252,7 +258,8 @@ namespace CS2_CustomIO
 				}
 			}
 		}
-		void KV_Target(CBaseEntity cEntity, string[] keyvalue)
+
+		static void KV_Target(CBaseEntity cEntity, string[] keyvalue)
 		{
 			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && FindEntityByName(keyvalue[1]) != null)
 			{
@@ -262,7 +269,8 @@ namespace CS2_CustomIO
 				#endif
 			}
 		}
-		void KV_Filtername(CBaseEntity cEntity, string[] keyvalue)
+
+		static void KV_Filtername(CBaseEntity cEntity, string[] keyvalue)
 		{
 			if (cEntity.DesignerName.StartsWith("trigger_") && keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && FindEntityByName(keyvalue[1]) != null)
 			{
@@ -272,27 +280,29 @@ namespace CS2_CustomIO
 				#endif
 			}
 		}
-		void KV_Force(CEntityInstance cEntity, string[] keyvalue)
+
+		static void KV_Force(CEntityInstance cEntity, string[] keyvalue)
 		{
 			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && cEntity.DesignerName.CompareTo("phys_thruster") == 0)
 			{
-				float fForce = 0.0f;
-				if (float.TryParse(keyvalue[1], out fForce))
+				if (float.TryParse(keyvalue[1], out float fForce))
 				{
-					CPhysThruster cThruster = new CPhysThruster(cEntity.Handle);
-					cThruster.Force = fForce;
+					CPhysThruster cThruster = new(cEntity.Handle)
+					{
+						Force = fForce
+					};
 					#if DEBUG
 					PrintToConsole($"phys_thruster: ID-{cThruster.Index} Name-{cThruster.Entity?.Name} Force: {fForce}");
 					#endif
 				}
 			}
 		}
-		void KV_Gravity(CBaseEntity cEntity, string[] keyvalue)
+
+		static void KV_Gravity(CBaseEntity cEntity, string[] keyvalue)
 		{
 			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
 			{
-				float fGravity = 0.0f;
-				if (float.TryParse(keyvalue[1], out fGravity))
+				if (float.TryParse(keyvalue[1], out float fGravity))
 				{
 					cEntity.GravityScale = fGravity;
 					#if DEBUG
@@ -301,12 +311,12 @@ namespace CS2_CustomIO
 				}
 			}
 		}
-		void KV_Timescale(CBaseEntity cEntity, string[] keyvalue)
+
+		static void KV_Timescale(CBaseEntity cEntity, string[] keyvalue)
 		{
 			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
 			{
-				float fTimeScale = 0.0f;
-				if (float.TryParse(keyvalue[1], out fTimeScale))
+				if (float.TryParse(keyvalue[1], out float fTimeScale))
 				{
 					cEntity.TimeScale = fTimeScale;
 					#if DEBUG
@@ -315,12 +325,12 @@ namespace CS2_CustomIO
 				}
 			}
 		}
-		void KV_Friction(CBaseEntity cEntity, string[] keyvalue)
+
+		static void KV_Friction(CBaseEntity cEntity, string[] keyvalue)
 		{
 			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
 			{
-				float fFriction = 0.0f;
-				if (float.TryParse(keyvalue[1], out fFriction))
+				if (float.TryParse(keyvalue[1], out float fFriction))
 				{
 					cEntity.Friction = fFriction;
 					#if DEBUG
@@ -329,7 +339,8 @@ namespace CS2_CustomIO
 				}
 			}
 		}
-		void KV_Speed(CEntityInstance cEntity, string[] keyvalue)
+
+		static void KV_Speed(CEntityInstance cEntity, string[] keyvalue)
 		{
 			var player = EntityIsPlayer(cEntity);
 			if (player != null && player.PlayerPawn.Value != null && player.PlayerPawn.Value.MovementServices != null && keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
@@ -346,7 +357,8 @@ namespace CS2_CustomIO
 				}
 			}
 		}
-		void KV_Runspeed(CEntityInstance cEntity, string[] keyvalue)
+
+		static void KV_Runspeed(CEntityInstance cEntity, string[] keyvalue)
 		{
 			var player = EntityIsPlayer(cEntity);
 			if (player != null && player.PlayerPawn.Value != null && keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
@@ -363,7 +375,7 @@ namespace CS2_CustomIO
 			}
 		}
 
-		CEntityInstance? FindEntityByName(string sName)
+		static CEntityInstance? FindEntityByName(string sName)
 		{
 			foreach (CEntityInstance? entbuf in Utilities.GetAllEntities())
 			{
@@ -371,7 +383,7 @@ namespace CS2_CustomIO
 			}
 			return null;
 		}
-		public CCSPlayerController? EntityIsPlayer(CEntityInstance? entity)
+		static CCSPlayerController? EntityIsPlayer(CEntityInstance? entity)
 		{
 			if (entity != null && entity.IsValid && entity.DesignerName.CompareTo("player") == 0)
 			{
