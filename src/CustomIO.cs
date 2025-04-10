@@ -29,7 +29,7 @@ namespace CS2_CustomIO
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.8";
+		public override string ModuleVersion => "1.DZ.9";
 		public override void Load(bool hotReload)
 		{
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
@@ -42,7 +42,7 @@ namespace CS2_CustomIO
 
 		private HookResult OnInput(DynamicHook hook)
 		{
-			var cEntity = hook.GetParam<CEntityIdentity>(0);		
+			var cEntity = hook.GetParam<CEntityIdentity>(0);
 			var cInput = hook.GetParam<CUtlSymbolLarge>(1);
 			if (string.IsNullOrEmpty(cInput.KeyValue)) return HookResult.Continue;
 			var cValue = new CUtlSymbolLarge(hook.GetParam<CVariant>(4).Handle);
@@ -77,7 +77,7 @@ namespace CS2_CustomIO
 						}
 					}
 				}
-			} else if (cInput.KeyValue.ToLower().CompareTo("addscore") == 0)
+			} else if (string.Equals(cInput.KeyValue.ToLower(), "addscore"))
 			{
 				var player = EntityIsPlayer(hook.GetParam<CEntityInstance>(2));
 				if (player != null && Int32.TryParse(cValue.KeyValue, out int iscore))
@@ -87,14 +87,14 @@ namespace CS2_CustomIO
 					PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) AddScore: {iscore}");
 					#endif
 				}
-			} else if (cInput.KeyValue.ToLower().CompareTo("setmessage") == 0 && cEntity.DesignerName.CompareTo("env_hudhint") == 0)
+			} else if (string.Equals(cInput.KeyValue.ToLower(), "setmessage") && string.Equals(cEntity.DesignerName, "env_hudhint"))
 			{
 				if(cValue.KeyValue != null) new CEnvHudHint(cEntity.EntityInstance.Handle).Message = cValue.KeyValue;
 				#if DEBUG
 				PrintToConsole($"env_hudhint({cEntity.Name}) SetMessage:{cValue.KeyValue}");
 				#endif
 			}
-			else if (cInput.KeyValue.ToLower().CompareTo("setmodel") == 0)
+			else if (string.Equals(cInput.KeyValue.ToLower(), "setmodel"))
 			{
 				if (!string.IsNullOrEmpty(cValue.KeyValue))
 				{
@@ -210,7 +210,7 @@ namespace CS2_CustomIO
 
 		static void KV_EntityTemplate(CEntityInstance cEntity, string[] keyvalue)
 		{
-			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && cEntity.DesignerName.CompareTo("env_entity_maker") == 0)
+			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && string.Equals(cEntity.DesignerName, "env_entity_maker"))
 			{
 				CEnvEntityMaker maker = new(cEntity.Handle)
 				{
@@ -283,7 +283,7 @@ namespace CS2_CustomIO
 
 		static void KV_Force(CEntityInstance cEntity, string[] keyvalue)
 		{
-			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && cEntity.DesignerName.CompareTo("phys_thruster") == 0)
+			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && string.Equals(cEntity.DesignerName, "phys_thruster"))
 			{
 				if (float.TryParse(keyvalue[1], out float fForce))
 				{
@@ -379,13 +379,13 @@ namespace CS2_CustomIO
 		{
 			foreach (CEntityInstance? entbuf in Utilities.GetAllEntities())
 			{
-				if (entbuf != null && entbuf.IsValid && entbuf.Entity != null && !string.IsNullOrEmpty(entbuf.Entity.Name) && entbuf.Entity.Name.CompareTo(sName) == 0) return entbuf;
+				if (entbuf != null && entbuf.IsValid && entbuf.Entity != null && !string.IsNullOrEmpty(entbuf.Entity.Name) && string.Equals(entbuf.Entity.Name, sName)) return entbuf;
 			}
 			return null;
 		}
 		static CCSPlayerController? EntityIsPlayer(CEntityInstance? entity)
 		{
-			if (entity != null && entity.IsValid && entity.DesignerName.CompareTo("player") == 0)
+			if (entity != null && entity.IsValid && string.Equals(entity.DesignerName, "player"))
 			{
 				var pawn = new CCSPlayerPawn(entity.Handle);
 				if (pawn.Controller.Value != null && pawn.Controller.Value.IsValid)
