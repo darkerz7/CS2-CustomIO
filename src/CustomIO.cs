@@ -29,7 +29,7 @@ namespace CS2_CustomIO
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.9";
+		public override string ModuleVersion => "1.DZ.10";
 		public override void Load(bool hotReload)
 		{
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
@@ -73,7 +73,11 @@ namespace CS2_CustomIO
 							case "friction": KV_Friction(new CBaseEntity(cEntity.EntityInstance.Handle), keyvalue); break;
 							case "speed": KV_Speed(cEntity.EntityInstance, keyvalue); break;
 							case "runspeed": KV_Runspeed(cEntity.EntityInstance, keyvalue); break;
-							
+							case "damage": KV_Damage(new CBaseEntity(cEntity.EntityInstance.Handle), keyvalue); break;
+							case "damagetype": KV_DamageType(new CBaseEntity(cEntity.EntityInstance.Handle), keyvalue); break;
+							case "damageradius": KV_DamageRadius(new CBaseEntity(cEntity.EntityInstance.Handle), keyvalue); break;
+							case "Case": KV_Case(new CBaseEntity(cEntity.EntityInstance.Handle), keyvalue); break;
+
 						}
 					}
 				}
@@ -371,6 +375,65 @@ namespace CS2_CustomIO
 					#if DEBUG
 					PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) RunSpeed: {fRunSpeed}");
 					#endif
+				}
+			}
+		}
+
+		static void KV_Damage(CBaseEntity cEntity, string[] keyvalue)
+		{
+			if (string.Equals(cEntity.DesignerName, "point_hurt"))
+			{
+				if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && Int32.TryParse(keyvalue[1], out int iDamage))
+				{
+					new CPointHurt(cEntity.Handle).Damage = iDamage;
+					#if DEBUG
+					PrintToConsole($"DesignerName: {cEntity.DesignerName} Name: {cEntity.Entity?.Name} Damage:{iDamage}");
+					#endif
+				}
+			}
+		}
+
+		static void KV_DamageType(CBaseEntity cEntity, string[] keyvalue)
+		{
+			if (string.Equals(cEntity.DesignerName, "point_hurt"))
+			{
+				if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && Int32.TryParse(keyvalue[1], out int iBitsDamageType))
+				{
+					new CPointHurt(cEntity.Handle).BitsDamageType = (DamageTypes_t)iBitsDamageType;
+					#if DEBUG
+					PrintToConsole($"DesignerName: {cEntity.DesignerName} Name: {cEntity.Entity?.Name} BitsDamageType:{iBitsDamageType}");
+					#endif
+				}
+			}
+		}
+
+		static void KV_DamageRadius(CBaseEntity cEntity, string[] keyvalue)
+		{
+			if (string.Equals(cEntity.DesignerName, "point_hurt"))
+			{
+				if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]) && Int32.TryParse(keyvalue[1], out int iDamageRadius))
+				{
+					new CPointHurt(cEntity.Handle).Radius = iDamageRadius;
+					#if DEBUG
+					PrintToConsole($"DesignerName: {cEntity.DesignerName} Name: {cEntity.Entity?.Name} DamageRadius:{iDamageRadius}");
+					#endif
+				}
+			}
+		}
+
+		static void KV_Case(CBaseEntity cEntity, string[] keyvalue)
+		{
+			if (string.Equals(cEntity.DesignerName, "logic_case"))
+			{
+				if (keyvalue.Length >= 3 && !string.IsNullOrEmpty(keyvalue[1]) && !string.IsNullOrEmpty(keyvalue[2]) && Int32.TryParse(keyvalue[1], out int iCase)) // keyvalue[1]-iCase; keyvalue[2]-pValue
+				{
+					if (iCase >= 1 && iCase <= 32)
+					{
+						new CLogicCase(cEntity.Handle).Case[iCase - 1] = keyvalue[2];
+						#if DEBUG
+						PrintToConsole($"DesignerName: {cEntity.DesignerName} Name: {cEntity.Entity?.Name} Case:{iCase} Value:{keyvalue[2]}");
+						#endif
+					}
 				}
 			}
 		}
