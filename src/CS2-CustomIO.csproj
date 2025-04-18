@@ -8,7 +8,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CounterStrikeSharp.API" Version="1.0.305" />
+    <PackageReference Include="CounterStrikeSharp.API" Version="1.0.316" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="gamedata\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="if exist $(ProjectDir)build rmdir /s/q $(ProjectDir)build" />
+	<Exec Command="if not exist $(ProjectDir)build mkdir $(ProjectDir)build" />
+	<Exec Command="if not exist $(ProjectDir)build\plugins\$(TargetName) mkdir $(ProjectDir)build\plugins\$(TargetName)" />
+    <Exec Command="copy /Y $(TargetDir)$(TargetName).dll $(ProjectDir)build\plugins\$(TargetName)\$(TargetName).dll" />
+	<Exec Command="move /Y $(TargetDir)gamedata $(ProjectDir)build" />
+  </Target>
 
 </Project>
