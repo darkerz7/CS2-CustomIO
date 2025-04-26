@@ -29,7 +29,7 @@ namespace CS2_CustomIO
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.10";
+		public override string ModuleVersion => "1.DZ.11";
 		public override void Load(bool hotReload)
 		{
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
@@ -76,7 +76,7 @@ namespace CS2_CustomIO
 							case "damage": KV_Damage(new CBaseEntity(cEntity.EntityInstance.Handle), keyvalue); break;
 							case "damagetype": KV_DamageType(new CBaseEntity(cEntity.EntityInstance.Handle), keyvalue); break;
 							case "damageradius": KV_DamageRadius(new CBaseEntity(cEntity.EntityInstance.Handle), keyvalue); break;
-							case "Case": KV_Case(new CBaseEntity(cEntity.EntityInstance.Handle), keyvalue); break;
+							case "case": KV_Case(new CBaseEntity(cEntity.EntityInstance.Handle), keyvalue); break;
 
 						}
 					}
@@ -427,9 +427,15 @@ namespace CS2_CustomIO
 			{
 				if (keyvalue.Length >= 3 && !string.IsNullOrEmpty(keyvalue[1]) && !string.IsNullOrEmpty(keyvalue[2]) && Int32.TryParse(keyvalue[1], out int iCase)) // keyvalue[1]-iCase; keyvalue[2]-pValue
 				{
+					string sArgs = keyvalue[2];
+					for (int i = 3; i < keyvalue.Length; i++)
+					{
+						if(!string.IsNullOrEmpty(keyvalue[i]))
+							sArgs += " " + keyvalue[i];
+					}
 					if (iCase >= 1 && iCase <= 32)
 					{
-						new CLogicCase(cEntity.Handle).Case[iCase - 1] = keyvalue[2];
+						new CLogicCase(cEntity.Handle).Case[iCase - 1] = sArgs;
 						#if DEBUG
 						PrintToConsole($"DesignerName: {cEntity.DesignerName} Name: {cEntity.Entity?.Name} Case:{iCase} Value:{keyvalue[2]}");
 						#endif
