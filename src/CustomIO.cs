@@ -26,18 +26,18 @@ namespace CS2_CustomIO
 			public string? KeyValue;
 		}
 		static MemoryFunctionVoid<CEntityIdentity, CUtlSymbolLarge, CEntityInstance, CEntityInstance, CVariant, int> CEntityIdentity_AcceptInputFunc = new(GameData.GetSignature("CEntityIdentity_AcceptInput"));
-		static readonly Vector vec3_origin = new(0, 0, 0);
-		static Vector[] g_vecPlayerOriginalVelocity = new Vector[65]; //Vector Leak Fix
+		//static readonly Vector vec3_origin = new(0, 0, 0);
+		//static Vector[] g_vecPlayerOriginalVelocity = new Vector[65]; //Vector Leak Fix
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.12";
+		public override string ModuleVersion => "1.DZ.12.1";
 		public override void Load(bool hotReload)
 		{
-			for (int i = 0; i < 65; i++)
+			/*for (int i = 0; i < 65; i++)
 			{
 				g_vecPlayerOriginalVelocity[i] = new(0, 0, 0);
-			}
+			}*/
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
 		}
 
@@ -114,7 +114,7 @@ namespace CS2_CustomIO
 						player.PlayerPawn.Value.SetModel(cValue.KeyValue);
 
 						//Fix moonwalking players after playermodel change
-						g_vecPlayerOriginalVelocity[player.Slot].X = player.PlayerPawn.Value.AbsVelocity.X;
+						/*g_vecPlayerOriginalVelocity[player.Slot].X = player.PlayerPawn.Value.AbsVelocity.X;
 						g_vecPlayerOriginalVelocity[player.Slot].Y = player.PlayerPawn.Value.AbsVelocity.Y;
 						g_vecPlayerOriginalVelocity[player.Slot].Z = player.PlayerPawn.Value.AbsVelocity.Z;
 						player.PlayerPawn.Value.MoveType = MoveType_t.MOVETYPE_OBSOLETE;
@@ -126,7 +126,7 @@ namespace CS2_CustomIO
 								player.PlayerPawn.Value.MoveType = MoveType_t.MOVETYPE_WALK;
 								player.PlayerPawn.Value.Teleport(null, null, g_vecPlayerOriginalVelocity[player.Slot]);
 							}
-						});
+						});*/
 						#if DEBUG
 						PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) SetModel: {cValue.KeyValue}");
 						#endif
