@@ -1,5 +1,6 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Entities;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Utils;
@@ -26,12 +27,14 @@ namespace CS2_CustomIO
 			public string? KeyValue;
 		}
 		static MemoryFunctionVoid<CEntityIdentity, CUtlSymbolLarge, CEntityInstance, CEntityInstance, CVariant, int> CEntityIdentity_AcceptInputFunc = new(GameData.GetSignature("CEntityIdentity_AcceptInput"));
+		static MemoryFunctionVoid<CEntityIdentity, string> CEntityIdentity_SetEntityNameFunc = new(GameData.GetSignature("CEntityIdentity_SetEntityName"));
+		static Action<CEntityIdentity, string> SetTargetName = CEntityIdentity_SetEntityNameFunc.Invoke;
 		//static readonly Vector vec3_origin = new(0, 0, 0);
 		//static Vector[] g_vecPlayerOriginalVelocity = new Vector[65]; //Vector Leak Fix
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.12.1";
+		public override string ModuleVersion => "1.DZ.13";
 		public override void Load(bool hotReload)
 		{
 			/*for (int i = 0; i < 65; i++)
@@ -141,10 +144,10 @@ namespace CS2_CustomIO
 		{
 			if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[1]))
 			{
-				cEntity.Name = keyvalue[1];
 				#if DEBUG
 				PrintToConsole($"DesignerName: {cEntity.DesignerName} OldTargetname: {cEntity.Name} NewTargetname: {keyvalue[1]}");
 				#endif
+				SetTargetName(cEntity, keyvalue[1]);
 			}
 		}
 
