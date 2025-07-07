@@ -1,31 +1,18 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Modules.Entities;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Utils;
-using System.Runtime.InteropServices;
+using System.Reflection.Metadata;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace CS2_CustomIO
 {
+	[MinimumApiVersion(322)]
 	public class CustomIO : BasePlugin
 	{
-		/*public class CUtlSymbolLarge : NativeObject
-		{
-			public CUtlSymbolLarge(IntPtr pointer) : base(pointer) { }
-			public string KeyValue => Utilities.ReadStringUtf8(Handle + 0);
-		}*/
-		public class CUtlSymbolLarge : NativeObject
-		{
-			public CUtlSymbolLarge(IntPtr pointer) : base(pointer)
-			{
-				IntPtr ptr = Marshal.ReadIntPtr(pointer);
-				//KeyValue = ptr.ToString();
-				if (ptr == IntPtr.Zero || ptr < 200000000000) return;
-				KeyValue = Marshal.PtrToStringUTF8(ptr);
-			}
-			public string? KeyValue;
-		}
 		static MemoryFunctionVoid<CEntityIdentity, CUtlSymbolLarge, CEntityInstance, CEntityInstance, CVariant, int> CEntityIdentity_AcceptInputFunc = new(GameData.GetSignature("CEntityIdentity_AcceptInput"));
 		static MemoryFunctionVoid<CEntityIdentity, string> CEntityIdentity_SetEntityNameFunc = new(GameData.GetSignature("CEntityIdentity_SetEntityName"));
 		static Action<CEntityIdentity, string> SetTargetName = CEntityIdentity_SetEntityNameFunc.Invoke;
@@ -34,7 +21,7 @@ namespace CS2_CustomIO
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.13";
+		public override string ModuleVersion => "1.DZ.14";
 		public override void Load(bool hotReload)
 		{
 			/*for (int i = 0; i < 65; i++)
@@ -52,15 +39,16 @@ namespace CS2_CustomIO
 		private HookResult OnInput(DynamicHook hook)
 		{
 			var cEntity = hook.GetParam<CEntityIdentity>(0);
-			var cInput = hook.GetParam<CUtlSymbolLarge>(1);
-			if (string.IsNullOrEmpty(cInput.KeyValue)) return HookResult.Continue;
-			var cValue = new CUtlSymbolLarge(hook.GetParam<CVariant>(4).Handle);
+			var sInput = hook.GetParam<CUtlSymbolLarge>(1).String;
+			if (string.IsNullOrEmpty(sInput)) return HookResult.Continue;
+			var cValue = hook.GetParam<CVariant>(4);
+			var sValue = cValue.FieldType == fieldtype_t.FIELD_CSTRING ? NativeAPI.GetStringFromSymbolLarge(cValue.Handle) : "";
 
-			if (cInput.KeyValue.StartsWith("keyvalue", StringComparison.OrdinalIgnoreCase))
+			if (sInput.StartsWith("keyvalue", StringComparison.OrdinalIgnoreCase))
 			{
-				if (!string.IsNullOrEmpty(cValue.KeyValue))
+				if (!string.IsNullOrEmpty(sValue))
 				{
-					string[] keyvalue = cValue.KeyValue.Split([' ']);
+					string[] keyvalue = sValue.Split([' ']);
 					if (keyvalue.Length >= 2 && !string.IsNullOrEmpty(keyvalue[0]))
 					{
 						switch (keyvalue[0].ToLower())
@@ -90,31 +78,31 @@ namespace CS2_CustomIO
 						}
 					}
 				}
-			} else if (string.Equals(cInput.KeyValue.ToLower(), "addscore"))
+			} else if (string.Equals(sInput.ToLower(), "addscore"))
 			{
 				var player = EntityIsPlayer(hook.GetParam<CEntityInstance>(2));
-				if (player != null && Int32.TryParse(cValue.KeyValue, out int iscore))
+				if (player != null && Int32.TryParse(sValue, out int iscore))
 				{
 					player.Score += iscore;
 					#if DEBUG
 					PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) AddScore: {iscore}");
 					#endif
 				}
-			} else if (string.Equals(cInput.KeyValue.ToLower(), "setmessage") && string.Equals(cEntity.DesignerName, "env_hudhint"))
+			} else if (string.Equals(sInput.ToLower(), "setmessage") && string.Equals(cEntity.DesignerName, "env_hudhint"))
 			{
-				if(cValue.KeyValue != null) new CEnvHudHint(cEntity.EntityInstance.Handle).Message = cValue.KeyValue;
+				if(sValue != null) new CEnvHudHint(cEntity.EntityInstance.Handle).Message = sValue;
 				#if DEBUG
-				PrintToConsole($"env_hudhint({cEntity.Name}) SetMessage:{cValue.KeyValue}");
+				PrintToConsole($"env_hudhint({cEntity.Name}) SetMessage:{sValue}");
 				#endif
 			}
-			else if (string.Equals(cInput.KeyValue.ToLower(), "setmodel"))
+			else if (string.Equals(sInput.ToLower(), "setmodel"))
 			{
-				if (!string.IsNullOrEmpty(cValue.KeyValue))
+				if (!string.IsNullOrEmpty(sValue))
 				{
 					var player = EntityIsPlayer(hook.GetParam<CEntityInstance>(2));
 					if (player != null && player.PlayerPawn.Value != null && player.PlayerPawn.Value.IsValid)
 					{
-						player.PlayerPawn.Value.SetModel(cValue.KeyValue);
+						player.PlayerPawn.Value.SetModel(sValue);
 
 						//Fix moonwalking players after playermodel change
 						/*g_vecPlayerOriginalVelocity[player.Slot].X = player.PlayerPawn.Value.AbsVelocity.X;
@@ -131,7 +119,7 @@ namespace CS2_CustomIO
 							}
 						});*/
 						#if DEBUG
-						PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) SetModel: {cValue.KeyValue}");
+						PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) SetModel: {sValue}");
 						#endif
 					}
 				}
