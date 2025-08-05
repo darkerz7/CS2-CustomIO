@@ -3,28 +3,24 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
-using CounterStrikeSharp.API.Modules.Utils;
 
 namespace CS2_CustomIO
 {
-	[MinimumApiVersion(322)]
+	[MinimumApiVersion(330)]
 	public class CustomIO : BasePlugin
 	{
 		static MemoryFunctionVoid<CEntityIdentity, CUtlSymbolLarge, CEntityInstance, CEntityInstance, CVariant, int> CEntityIdentity_AcceptInputFunc = new(GameData.GetSignature("CEntityIdentity_AcceptInput"));
 		static MemoryFunctionVoid<CEntityIdentity, string> CEntityIdentity_SetEntityNameFunc = new(GameData.GetSignature("CEntityIdentity_SetEntityName"));
+		static MemoryFunctionVoid<CBaseEntity, float> CBaseEntity_SetGravityScaleFunc = new (GameData.GetSignature("CBaseEntity_SetGravityScale"));
 		static Action<CEntityIdentity, string> SetTargetName = CEntityIdentity_SetEntityNameFunc.Invoke;
-		//static readonly Vector vec3_origin = new(0, 0, 0);
-		//static Vector[] g_vecPlayerOriginalVelocity = new Vector[65]; //Vector Leak Fix
+		static Action<CBaseEntity, float> SetGravityScale = CBaseEntity_SetGravityScaleFunc.Invoke;
+		static readonly System.Numerics.Vector3 vec3_origin = new(0, 0, 0);
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.14";
+		public override string ModuleVersion => "1.DZ.15";
 		public override void Load(bool hotReload)
 		{
-			/*for (int i = 0; i < 65; i++)
-			{
-				g_vecPlayerOriginalVelocity[i] = new(0, 0, 0);
-			}*/
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
 		}
 
@@ -102,19 +98,7 @@ namespace CS2_CustomIO
 						player.PlayerPawn.Value.SetModel(sValue);
 
 						//Fix moonwalking players after playermodel change
-						/*g_vecPlayerOriginalVelocity[player.Slot].X = player.PlayerPawn.Value.AbsVelocity.X;
-						g_vecPlayerOriginalVelocity[player.Slot].Y = player.PlayerPawn.Value.AbsVelocity.Y;
-						g_vecPlayerOriginalVelocity[player.Slot].Z = player.PlayerPawn.Value.AbsVelocity.Z;
-						player.PlayerPawn.Value.MoveType = MoveType_t.MOVETYPE_OBSOLETE;
-						player.PlayerPawn.Value.Teleport(null, null, vec3_origin);
-						_ = new CounterStrikeSharp.API.Modules.Timers.Timer(0.01f, () =>
-						{
-							if(player != null && player.PlayerPawn.Value != null && player.PlayerPawn.Value.IsValid && player.PawnIsAlive)
-							{
-								player.PlayerPawn.Value.MoveType = MoveType_t.MOVETYPE_WALK;
-								player.PlayerPawn.Value.Teleport(null, null, g_vecPlayerOriginalVelocity[player.Slot]);
-							}
-						});*/
+						FixPlayerModelAnimations(player.PlayerPawn.Value);
 						#if DEBUG
 						PrintToConsole($"Player: {player.PlayerName}({player.SteamID}) SetModel: {sValue}");
 						#endif
@@ -123,6 +107,25 @@ namespace CS2_CustomIO
 			}
 
 			return HookResult.Continue;
+		}
+
+		static void FixPlayerModelAnimations(CCSPlayerPawn pawn)
+		{
+			if (pawn.ActualMoveType < MoveType_t.MOVETYPE_WALK) return;
+
+			CCSPlayerPawn bufpawn = new CCSPlayerPawn(pawn.Handle);
+			System.Numerics.Vector3 originalVelocity = (System.Numerics.Vector3)pawn.AbsVelocity;
+			
+			pawn.Teleport(null, null, vec3_origin);
+			pawn.MoveType = MoveType_t.MOVETYPE_OBSOLETE;
+			_ = new CounterStrikeSharp.API.Modules.Timers.Timer(0.02f, () =>
+			{
+				if (bufpawn != null && bufpawn.IsValid)
+				{
+					bufpawn.MoveType = MoveType_t.MOVETYPE_WALK;
+					bufpawn.Teleport(null, null, originalVelocity);
+				}
+			});
 		}
 
 		static void KV_Targetname(CEntityIdentity cEntity, string[] keyvalue)
@@ -145,7 +148,7 @@ namespace CS2_CustomIO
 					x = Math.Clamp(x, -16384.0f, 16384.0f);
 					y = Math.Clamp(y, -16384.0f, 16384.0f);
 					z = Math.Clamp(z, -16384.0f, 16384.0f);
-					Vector vecOrigin = new(x, y, z);
+					System.Numerics.Vector3 vecOrigin = new(x, y, z);
 					cEntity.Teleport(vecOrigin);
 					#if DEBUG
 					PrintToConsole($"DesignerName: {cEntity.DesignerName} Name: {cEntity.Entity?.Name} NewOrigin:{x} {y} {z}");
@@ -163,7 +166,7 @@ namespace CS2_CustomIO
 					x = Math.Clamp(x, -360.0f, 360.0f);
 					y = Math.Clamp(y, -360.0f, 360.0f);
 					z = Math.Clamp(z, -360.0f, 360.0f);
-					QAngle vecAngle = new(x, y, z);
+					System.Numerics.Vector3 vecAngle = new(x, y, z);
 					cEntity.Teleport(null, vecAngle, null);
 					#if DEBUG
 					PrintToConsole($"DesignerName: {cEntity.DesignerName} Name: {cEntity.Entity?.Name} NewAngle:{x} {y} {z}");
@@ -263,7 +266,7 @@ namespace CS2_CustomIO
 					x = Math.Clamp(x, -4096.0f, 4096.0f);
 					y = Math.Clamp(y, -4096.0f, 4096.0f);
 					z = Math.Clamp(z, -4096.0f, 4096.0f);
-					Vector vecAbsVelocity = new(x, y, z);
+					System.Numerics.Vector3 vecAbsVelocity = new(x, y, z);
 					cEntity.Teleport(null, null, vecAbsVelocity);
 					#if DEBUG
 					PrintToConsole($"DesignerName: {cEntity.DesignerName} Name: {cEntity.Entity?.Name} AbsVelocity:{x} {y} {z}");
@@ -317,7 +320,8 @@ namespace CS2_CustomIO
 			{
 				if (float.TryParse(keyvalue[1], out float fGravity))
 				{
-					cEntity.GravityScale = fGravity;
+					//cEntity.GravityScale = fGravity;
+					SetGravityScale(cEntity, fGravity);
 					#if DEBUG
 					PrintToConsole($"DesignerName: {cEntity.DesignerName} Name: {cEntity.Entity?.Name} Gravity: {fGravity}");
 					#endif
