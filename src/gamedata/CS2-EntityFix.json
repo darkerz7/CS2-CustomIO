@@ -12,5 +12,26 @@
 			"windows": "48 89 5C 24 ? 57 48 83 EC ? 4C 8B 02",
 			"linux": "55 48 89 E5 41 54 49 89 F4 53 48 89 FB 48 83 EC ? 48 8B 07 48 8B 16"
 		}
+	},
+	"CEntityIdentity_SetEntityName": {
+		"signatures": {
+			"library": "server",
+			"windows": "48 89 5C 24 10 57 48 83 EC 20 48 8B D9 4C 8B C2",
+			"linux": "55 48 89 F2 48 89 E5 41 55 41 54 53"
+		}
+	},
+	"CBaseEntity_SetGravityScale": {
+		"signatures": {
+			"library": "server",
+			"windows": "48 89 5C 24 08 57 48 83 EC ? F3 0F 10 81 04 04 00 00",
+			"linux": "55 48 89 E5 41 57 41 56 41 55 41 54 53 48 89 FB 48 81 EC ? ? ? ? 0F 2E 87 ? ? ? ? 7A ? 75 ? 48 81 C4 ? ? ? ? 5B 41 5C 41 5D 41 5E 41 5F 5D C3 0F 1F 40 ? 31 C9 31 F6 31 FF F3 0F 11 85 ? ? ? ? 66 89 8D ? ? ? ? BA ? ? ? ? B9 ? ? ? ? 66 0F EF C9 48 C7 85 ? ? ? ? ? ? ? ? 48 C7 85 ? ? ? ? ? ? ? ? 48 C7 85 ? ? ? ? ? ? ? ? 48 C7 85 ? ? ? ? ? ? ? ? 0F 29 8D ? ? ? ? 48 C7 85 ? ? ? ? ? ? ? ? C7 85 ? ? ? ? ? ? ? ? E8 ? ? ? ? F3 0F 10 85 ? ? ? ? 85 C0 41 89 C4 0F 8E ? ? ? ? 48 63 8D ? ? ? ? 48 63 D0 31 F6 F3 0F 11 85 ? ? ? ? 48 C1 E2 ? 48 8B BD ? ? ? ? 48 C1 E1 ? 81 BD ? ? ? ? ? ? ? ? 40 0F 96 C6 E8 ? ? ? ? 8B 95 ? ? ? ? F3 0F 10 85 ? ? ? ? 48 89 85 ? ? ? ? 81 FA ? ? ? ? 0F 87"
+		}
+	},
+	"CTriggerGravity_GravityTouch": {
+		"signatures": {
+			"library": "server",
+			"windows": "48 89 5C 24 08 57 48 83 EC ? 48 8B 02 48 8B F9 48 8B CA 48 8B DA FF 90 60 05 00 00 84 C0 74 ? F3 0F 10 8F 14 04 00 00",
+			"linux": "55 48 89 E5 41 54 49 89 FC 48 89 F7 53 48 89 F3 FF 90 58 05 00 00"
+		}
 	}
 }
