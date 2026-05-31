@@ -6,7 +6,7 @@ using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 
 namespace CS2_CustomIO
 {
-	[MinimumApiVersion(330)]
+	[MinimumApiVersion(369)]
 	public class CustomIO : BasePlugin
 	{
 		static MemoryFunctionVoid<CEntityIdentity, CUtlSymbolLarge, CEntityInstance, CEntityInstance, CVariant, int> CEntityIdentity_AcceptInputFunc = new(GameData.GetSignature("CEntityIdentity_AcceptInput"));
@@ -18,7 +18,7 @@ namespace CS2_CustomIO
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.15";
+		public override string ModuleVersion => "1.DZ.16";
 		public override void Load(bool hotReload)
 		{
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
