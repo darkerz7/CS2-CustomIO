@@ -9,7 +9,7 @@ namespace CS2_CustomIO
 	[MinimumApiVersion(369)]
 	public class CustomIO : BasePlugin
 	{
-		static MemoryFunctionVoid<CEntityIdentity, CUtlSymbolLarge, CEntityInstance, CEntityInstance, CVariant> CEntityIdentity_AcceptInputFunc = new(GameData.GetSignature("CEntityIdentity_AcceptInput"));
+		static MemoryFunctionVoid<CEntityIdentity, CUtlSymbolLarge, CEntityInstance, CEntityInstance, CVariant, IntPtr, IntPtr> CEntityIdentity_AcceptInputFunc = new(GameData.GetSignature("CEntityIdentity_AcceptInput"));
 		static MemoryFunctionVoid<CEntityIdentity, string> CEntityIdentity_SetEntityNameFunc = new(GameData.GetSignature("CEntityIdentity_SetEntityName"));
 		static MemoryFunctionVoid<CBaseEntity, float> CBaseEntity_SetGravityScaleFunc = new (GameData.GetSignature("CBaseEntity_SetGravityScale"));
 		static Action<CEntityIdentity, string> SetTargetName = CEntityIdentity_SetEntityNameFunc.Invoke;
@@ -18,7 +18,7 @@ namespace CS2_CustomIO
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.17";
+		public override string ModuleVersion => "1.DZ.17.2";
 		public override void Load(bool hotReload)
 		{
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
