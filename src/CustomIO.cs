@@ -18,7 +18,7 @@ namespace CS2_CustomIO
 		public override string ModuleName => "Custom IO";
 		public override string ModuleDescription => "Fixes missing keyvalues from CSS/CS:GO";
 		public override string ModuleAuthor => "DarkerZ [RUS]";
-		public override string ModuleVersion => "1.DZ.17.2";
+		public override string ModuleVersion => "1.DZ.17.3";
 		public override void Load(bool hotReload)
 		{
 			CEntityIdentity_AcceptInputFunc.Hook(OnInput, HookMode.Pre);
